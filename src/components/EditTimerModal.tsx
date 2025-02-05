@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { X, Clock } from 'lucide-react';
-import { useTimerStore } from '../store/useTimerStore';
-import { validateTimerForm } from '../utils/validation';
-import { Timer } from '../types/timer';
+import { Clock, X } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useTimerStore } from "../store/useTimerStore";
+import { Timer } from "../types/timer";
+import { TimerAudio } from "../utils/audio";
+import { validateTimerForm } from "../utils/validation";
+import ModalButton from "./ModalButton";
 
 interface EditTimerModalProps {
   isOpen: boolean;
@@ -18,7 +21,9 @@ export const EditTimerModal: React.FC<EditTimerModalProps> = ({
   const [title, setTitle] = useState(timer.title);
   const [description, setDescription] = useState(timer.description);
   const [hours, setHours] = useState(Math.floor(timer.duration / 3600));
-  const [minutes, setMinutes] = useState(Math.floor((timer.duration % 3600) / 60));
+  const [minutes, setMinutes] = useState(
+    Math.floor((timer.duration % 3600) / 60)
+  );
   const [seconds, setSeconds] = useState(timer.duration % 60);
   const [touched, setTouched] = useState({
     title: false,
@@ -26,6 +31,7 @@ export const EditTimerModal: React.FC<EditTimerModalProps> = ({
     minutes: false,
     seconds: false,
   });
+  const [errorMessage, setErrorMessage] = useState("");
 
   const { editTimer } = useTimerStore();
 
@@ -48,18 +54,56 @@ export const EditTimerModal: React.FC<EditTimerModalProps> = ({
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
+    const timerAudio = TimerAudio.getInstance();
     e.preventDefault();
-    
-    if (!validateTimerForm({ title, description, hours, minutes, seconds })) {
+
+    if (!isTitleValid) {
+      setErrorMessage("Title is mandatory");
+      toast.error(errorMessage);
       return;
     }
 
+    if (!isTimeValid) {
+      setErrorMessage("Duration is mandatory");
+      toast.error(errorMessage);
+      return;
+    }
+
+    if (!validateTimerForm({ title, description, hours, minutes, seconds })) {
+      setErrorMessage("Please fill in all mandatory fields");
+      toast.error(errorMessage);
+      return;
+    }
+
+    const isTimerRunning = timer.isRunning;
+
     const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-    
+
     editTimer(timer.id, {
       title: title.trim(),
       description: description.trim(),
       duration: totalSeconds,
+      isRunning: false,
+      remainingTime: totalSeconds,
+    });
+
+    timerAudio.resumeAudioContext();
+
+    // if timer not running, then start audio
+    if (isTimerRunning || totalSeconds > 0) {
+      timerAudio.play(5000);
+    }
+
+    toast.success(`Timer "${timer.title}" has ended!`, {
+      duration: 5000,
+      action: {
+        label: "Dismiss",
+        onClick: () => {
+          if (timerAudio) {
+            timerAudio.stop();
+          }
+        },
+      },
     });
 
     onClose();
@@ -86,14 +130,15 @@ export const EditTimerModal: React.FC<EditTimerModalProps> = ({
             <Clock className="w-5 h-5 text-blue-600" />
             <h2 className="text-xl font-semibold">Edit Timer</h2>
           </div>
-          <button 
+          <ModalButton
+            type="button"
             onClick={handleClose}
             className="p-1 hover:bg-gray-100 rounded-full transition-colors"
           >
             <X className="w-5 h-5" />
-          </button>
+          </ModalButton>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -107,8 +152,8 @@ export const EditTimerModal: React.FC<EditTimerModalProps> = ({
               maxLength={50}
               className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                 touched.title && !isTitleValid
-                  ? 'border-red-500'
-                  : 'border-gray-300'
+                  ? "border-red-500"
+                  : "border-gray-300"
               }`}
               placeholder="Enter timer title"
             />
@@ -121,7 +166,7 @@ export const EditTimerModal: React.FC<EditTimerModalProps> = ({
               {title.length}/50 characters
             </p>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Description
@@ -134,75 +179,101 @@ export const EditTimerModal: React.FC<EditTimerModalProps> = ({
               placeholder="Enter timer description (optional)"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
               Duration <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Hours</label>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Hours
+                </label>
                 <input
                   type="number"
                   min="0"
                   max="23"
-                  value={hours}
-                  onChange={(e) => setHours(Math.min(23, parseInt(e.target.value) || 0))}
+                  value={hours === 0 ? "" : hours}
+                  onChange={(e) =>
+                    setHours(
+                      e.target.value === ""
+                        ? 0
+                        : Math.min(23, parseInt(e.target.value) || 0)
+                    )
+                  }
                   onBlur={() => setTouched({ ...touched, hours: true })}
                   className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Minutes</label>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Minutes
+                </label>
                 <input
                   type="number"
                   min="0"
                   max="59"
-                  value={minutes}
-                  onChange={(e) => setMinutes(Math.min(59, parseInt(e.target.value) || 0))}
+                  value={minutes === 0 ? "" : minutes}
+                  onChange={(e) =>
+                    setMinutes(
+                      e.target.value === ""
+                        ? 0
+                        : Math.min(59, parseInt(e.target.value) || 0)
+                    )
+                  }
                   onBlur={() => setTouched({ ...touched, minutes: true })}
                   className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Seconds</label>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Seconds
+                </label>
                 <input
                   type="number"
                   min="0"
                   max="59"
-                  value={seconds}
-                  onChange={(e) => setSeconds(Math.min(59, parseInt(e.target.value) || 0))}
+                  value={seconds === 0 ? "" : seconds}
+                  onChange={(e) =>
+                    setSeconds(
+                      e.target.value === ""
+                        ? 0
+                        : Math.min(59, parseInt(e.target.value) || 0)
+                    )
+                  }
                   onBlur={() => setTouched({ ...touched, seconds: true })}
                   className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
-            {touched.hours && touched.minutes && touched.seconds && !isTimeValid && (
-              <p className="mt-2 text-sm text-red-500">
-                Please set a duration greater than 0
-              </p>
-            )}
+            {touched.hours &&
+              touched.minutes &&
+              touched.seconds &&
+              !isTimeValid && (
+                <p className="mt-2 text-sm text-red-500">
+                  Please set a duration greater than 0
+                </p>
+              )}
           </div>
-          
+
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <button
+            <ModalButton
               type="button"
               onClick={handleClose}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
             >
               Cancel
-            </button>
-            <button
+            </ModalButton>
+            <ModalButton
               type="submit"
               className={`px-4 py-2 text-sm font-medium text-white rounded-md transition-colors ${
                 isTitleValid && isTimeValid
-                  ? 'bg-blue-600 hover:bg-blue-700'
-                  : 'bg-blue-400 cursor-not-allowed'
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-blue-400 cursor-not-allowed"
               }`}
-              disabled={!isTitleValid || !isTimeValid}
             >
               Save Changes
-            </button>
+            </ModalButton>
           </div>
         </form>
       </div>

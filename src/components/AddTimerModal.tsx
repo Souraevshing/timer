@@ -1,7 +1,9 @@
 import { Clock, X } from "lucide-react";
 import React, { useState } from "react";
+import { toast } from "sonner";
 import { useTimerStore } from "../store/useTimerStore";
 import { validateTimerForm } from "../utils/validation";
+import ModalButton from "./ModalButton";
 
 interface AddTimerModalProps {
   isOpen: boolean;
@@ -23,15 +25,33 @@ export const AddTimerModal: React.FC<AddTimerModalProps> = ({
     minutes: false,
     seconds: false,
   });
+  const [errorMessage, setErrorMessage] = useState("");
 
   const { addTimer } = useTimerStore();
 
   if (!isOpen) return null;
 
+  const isTimeValid = hours > 0 || minutes > 0 || seconds > 0;
+  const isTitleValid = title.trim().length > 0 && title.length <= 50;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!isTitleValid) {
+      setErrorMessage("Title is mandatory");
+      toast.error(errorMessage);
+      return;
+    }
+
+    if (!isTimeValid) {
+      setErrorMessage("Duration is mandatory");
+      toast.error(errorMessage);
+      return;
+    }
+
     if (!validateTimerForm({ title, description, hours, minutes, seconds })) {
+      setErrorMessage("Please fill in all mandatory fields");
+      toast.error(errorMessage);
       return;
     }
 
@@ -57,6 +77,7 @@ export const AddTimerModal: React.FC<AddTimerModalProps> = ({
       minutes: false,
       seconds: false,
     });
+    setErrorMessage("");
   };
 
   const handleClose = () => {
@@ -69,9 +90,6 @@ export const AddTimerModal: React.FC<AddTimerModalProps> = ({
     });
   };
 
-  const isTimeValid = hours > 0 || minutes > 0 || seconds > 0;
-  const isTitleValid = title.trim().length > 0 && title.length <= 50;
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
@@ -80,12 +98,13 @@ export const AddTimerModal: React.FC<AddTimerModalProps> = ({
             <Clock className="w-5 h-5 text-blue-600" />
             <h2 className="text-xl font-semibold">Add New Timer</h2>
           </div>
-          <button
+          <ModalButton
+            type="button"
             onClick={handleClose}
             className="p-1 hover:bg-gray-100 rounded-full transition-colors"
           >
             <X className="w-5 h-5" />
-          </button>
+          </ModalButton>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -206,24 +225,23 @@ export const AddTimerModal: React.FC<AddTimerModalProps> = ({
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <button
+            <ModalButton
               type="button"
               onClick={handleClose}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
             >
               Cancel
-            </button>
-            <button
+            </ModalButton>
+            <ModalButton
               type="submit"
               className={`px-4 py-2 text-sm font-medium text-white rounded-md transition-colors ${
                 isTitleValid && isTimeValid
                   ? "bg-blue-600 hover:bg-blue-700"
-                  : "bg-blue-400 cursor-not-allowed"
+                  : "bg-blue-400"
               }`}
-              disabled={!isTitleValid || !isTimeValid}
             >
               Add Timer
-            </button>
+            </ModalButton>
           </div>
         </form>
       </div>
