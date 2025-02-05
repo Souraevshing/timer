@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Plus, Clock } from 'lucide-react';
-import { TimerList } from './components/TimerList';
-import { AddTimerModal } from './components/AddTimerModal';
-import { Toaster } from 'sonner';
+import { Clock, Plus } from "lucide-react";
+import { useState } from "react";
+import { Toaster } from "sonner";
+import { AddTimerModal } from "./components/AddTimerModal";
+import { TimerList } from "./components/TimerList";
 
 function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -12,21 +12,25 @@ function Home() {
       <Toaster position="top-right" />
       <div className="container mx-auto px-4 py-8">
         <div>
-          <div className="flex items-center gap-3">
-            <Clock className="w-8 h-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Timer</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Clock className="w-8 h-8 text-blue-600" />
+              <h1 className="text-3xl font-bold text-gray-900">Timer App</h1>
+            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+            >
+              <Plus className="w-5 h-5" />
+              Add Timer
+            </button>
           </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
-          >
-            <Plus className="w-5 h-5" />
-            Add Timer
-          </button>
         </div>
-        
-        <TimerList />
-        
+
+        <div className="py-8">
+          <TimerList />
+        </div>
+
         <AddTimerModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
