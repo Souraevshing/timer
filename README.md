@@ -5,11 +5,13 @@ Welcome to the Timer App Assignment! This project is designed to evaluate your s
 ---
 
 ## **Objective**
+
 Your task is to improve and enhance an existing Timer App based on the following requirements. The app currently has a partially implemented timer system, and your goal is to address the listed issues and extend its functionality.
 
 ---
 
 ## **Tech Stack**
+
 - **Frontend Framework**: React (with Vite for fast development)
 - **Styling**: Tailwind CSS
 - **Testing Framework**: Vitest (for unit and component testing)
@@ -30,7 +32,6 @@ Your task is to improve and enhance an existing Timer App based on the following
       - <img width="250" alt="Screenshot 2024-12-03 at 3 29 25 PM" src="https://github.com/user-attachments/assets/9bb429ff-cd78-4411-b222-9d947c3ae79b">
       - <img width="250" alt="Screenshot 2024-12-03 at 8 21 04 PM" src="https://github.com/user-attachments/assets/a26e8ec7-7e00-4964-8f61-651945f4bbd1">
       - <img width="250" alt="Screenshot 2024-12-03 at 8 21 30 PM" src="https://github.com/user-attachments/assets/a513a462-540f-45e7-8ac0-0890995ec82d">
-
 
    2. **Simultaneous Timers:**
       - Update the app to allow multiple timers to run simultaneously (currently, only one timer runs at a time).
@@ -70,21 +71,25 @@ Your task is to improve and enhance an existing Timer App based on the following
 ## **Project Setup**
 
 1. Clone the repository:  
+
    ```bash
    git clone https://github.com/CW-Codewalnut/timer.git
    ```
 
 2. Install dependencies:  
+
    ```bash
    npm install
    ```
 
 3. Start the development server:  
+
    ```bash
    npm run dev
    ```
 
 4. Run tests:  
+
    ```bash
    npm vitest
    ```
@@ -142,3 +147,17 @@ You are expected to complete this assignment in **4 hours** of focused effort.
 If you have any questions or issues, feel free to reach out via the provided contact channels in the repository.
 
 Good luck! 🚀
+
+## **Changes done so far**
+
+- Fixed UI for all the 3 screens as in the README.md
+- Fixed the Add Timer button to the right
+- Added rounded border to all input fields to make the UI look uniform.
+- Fixed the value inside input box as empty string instead of 0 for all input fields. This was a huge glitch since user had to remove the 0 then input the value.
+- Add reusable ModalButton to be reused instead of button.
+- Add reusable Modal container to be reused inside Add and/or Edit Timer.
+- Add test file for form handling validation inside Add Timer.
+- run audio till toast is shown.
+- Updated dynamic toast position based on screen size.
+- Validate mandatory input fields by showing error toast notification.
+- Handle toast notification on dismiss.

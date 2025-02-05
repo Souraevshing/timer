@@ -43,9 +43,18 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
           });
         }
       }, 1000);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     }
 
-    return () => clearInterval(intervalRef.current!);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, [
     timer.isRunning,
     timer.id,
@@ -61,6 +70,9 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
   };
 
   const handleDelete = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
     timerAudio.stop();
     deleteTimer(timer.id);
   };
